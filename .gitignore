@@ -21,3 +21,13 @@ setup/smoke_out/
 pipeline/demo_local/out/
 pipeline/*/out/
 *.png.bak
+
+# 本 repo 補充（2026-10-23）：個資、本人素材、影片產物一律不進 git
+input_*/
+**/input_*/
+out/
+**/out/
+*.jpg
+!templates/**/*.jpg
+!pipeline/example_D-7/**/*.jpg
+.claude/

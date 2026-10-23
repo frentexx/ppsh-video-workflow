@@ -1,6 +1,9 @@
 MIT License
 
 Copyright (c) 2026 山獅霸的多重宇宙 (mathruffian-dot)
+Modifications and additions Copyright (c) 2026 屏北高中 fuwen
+(forked from https://github.com/mathruffian-dot/shanshiba-workflow-16gvram-32gram;
+ the list of changes is in README.md)
 
 This license applies to the source code in this repository: all files under
 tools/, pipeline/ (except *.md), setup/ (except *.md), configs/, and any other

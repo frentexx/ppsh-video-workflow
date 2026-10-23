@@ -8,7 +8,15 @@ stage（不給＝全部依序）：chars masters frames voices h3 amb edl music 
   - 改了台詞：刪 out/voice/bv 裡那句的檔（或整個 out/voice/bv），再跑 voices
   - 改了剪接（cut_in、tail…）：跑 edl cut review 即可
 人工關卡：frames 之後看 out/first/_sheet.jpg；h3 之後看 out/review/clips_*.jpg；review 之後一定要看成片。
-2026-10-07 由「一個沒看過本專案的 agent 照 repo 做出〈被狗吃掉的作業〉」時寫的 film.py／post.py 整理而成。"""
+2026-10-07 由「一個沒看過本專案的 agent 照 repo 做出〈被狗吃掉的作業〉」時寫的 film.py／post.py 整理而成。
+本地增強（2026-10-19～23 製作《團結》時加入，見 docs/10_影片品質實驗.md）：
+  - film.json h3.dmad：DMAD 步數／強度，預設 8 步、0.8（原版 4 步 1.0 動作大會換臉）
+  - film.json h3.setting_by_scene：依場景分開寫 H3 場景描述；單鏡也可寫 setting 覆蓋
+  - 單鏡 constraints：整組取代全片約束（extra_constraints 仍是追加）
+  - 單鏡 h3_lora：疊動作 LoRA（例：[{"name": "H3_Combat_V2.safetensors", "strength": 0.6}]）
+  - film.json masters 的值可寫 {"photo": "實景照路徑"}：直接用實景照當場景母版（裁成 1.75:1），不再生 AI 場景
+  - 配樂段落數依片長計算（約每 7 秒一段）；Music 3 單次實務上約 2 分鐘就是上限，更長的片分段生再交叉淡入
+  - film.json snippets：首幀 frame 裡的 {名稱} 會換成 snippets 的內容"""
 import json
 import os
 import re
@@ -126,10 +134,17 @@ def chars():
 
 @stage("masters")
 def masters():
-    """場景母版（空景 2K），再依每鏡的 scene 框裁成該鏡景別，當首幀的場景參考（docs/07 §4）。"""
+    """場景母版（空景 2K），再依每鏡的 scene 框裁成該鏡景別，當首幀的場景參考（docs/07 §4）。
+    值是字串＝提示詞，用 AI 生；值是 {"photo": 路徑}＝實景照（相對於 film.json），置中裁成 1.75:1、縮放成 2688×1536。"""
     from PIL import Image
     for k, p in CFG.get("masters", {}).items():
         dst = OUT / "masters" / f"{k}.png"
+        if not dst.exists() and isinstance(p, dict):   # 2026-10-23：場景母版一開始就用實景照（AI 想像的場景事後補救很貴，見 docs/09）
+            dst.parent.mkdir(exist_ok=True)
+            im = Image.open((FILM.parent / p["photo"]).resolve()).convert("RGB"); w, h = im.size
+            tw, th = (w, round(w / 1.75)) if w / h <= 1.75 else (round(h * 1.75), h)
+            x0, y0 = (w - tw) // 2, (h - th) // 2
+            im.crop((x0, y0, x0 + tw, y0 + th)).resize((2688, 1536), Image.LANCZOS).save(dst)
         if not dst.exists():
             run([PYH3, T / "gen_image.py", "--prompt", p, "--seed", seed("master_" + k, 21), "--prefix", f"film/master_{k}", "--out", "masters"])
             newest(OUT / "masters").rename(dst)
@@ -151,7 +166,10 @@ def frames():
         keep = " ".join(f"Keep exactly the same person as <image{i}>: same face, hairstyle and clothes ({CHARS[k]['look']})."
                         for i, k in enumerate(s["refs"], 1))
         set_s = (" " + CFG["set_sentence"].format(n=len(s["refs"]) + 1)) if s.get("scene") else ""
-        p = keep + set_s + " New photo: " + CFG["cine"] + s["frame"] + CFG.get("frame_suffix", " No text, no watermark, no captions.")
+        frame = s["frame"]
+        for k, v in CFG.get("snippets", {}).items():   # 本地增強：{名稱} 引用 film.json snippets（固定的場景方向描述只寫一次）
+            frame = frame.replace("{" + k + "}", v)
+        p = keep + set_s + " New photo: " + CFG["cine"] + frame + CFG.get("frame_suffix", " No text, no watermark, no captions.")
         cmd = [PYH3, T / "gen_image.py", "--model", "qwen-edit", "--width", "1344", "--height", "768", "--prompt", p,
                "--seed", seed("frame_" + s["id"], 5101), "--prefix", f"film/{s['id']}", "--out", "first"]
         for k in s["refs"]:
@@ -229,15 +247,16 @@ def shot_secs(s, picks):
 def h3_spec(s, secs, dialogue):
     h = CFG["h3"]
     return dict(duration=round(secs - 0.02, 3), size=[1344, 768], seed=seed("h3_" + s["id"], h.get("default_seed", 20261007)), steps=14, draft=True,
-                style=h["style"], setting=h["setting"], first_frame=str(OUT / "first" / f"{s['id']}.png"),
+                style=h["style"], first_frame=str(OUT / "first" / f"{s['id']}.png"),
+                setting=s.get("setting") or h.get("setting_by_scene", {}).get((s.get("scene") or [""])[0]) or h["setting"],   # 2026-10-23：依場景分開寫，教室鏡不提走廊
                 subjects=[dict(key=k, desc=CHARS[k]["look"], voice=CHARS[k]["h3_voice"]) for k in s["refs"]],
                 shots=[dict(camera=s.get("camera", h.get("camera", "The camera holds a static shot on a tripod.")), action=s["action"], dialogue=dialogue)],
-                constraints=h.get("constraints", []) + s.get("extra_constraints", []), soundscape=h["soundscape"], music="N/A")
+                constraints=s.get("constraints", h.get("constraints", [])) + s.get("extra_constraints", []), soundscape=h["soundscape"], music="N/A")
 
 
 @stage("h3")
 def h3():
-    """每鏡 H3（DMAD 4 步、只給首幀）。看得到臉的鏡頭一律給固定音軌：有台詞放配音，沒台詞放靜音（否則角色會自己嘟囔）。"""
+    """每鏡 H3（DMAD 8 步／0.8、只給首幀；h3.dmad 可改）。看得到臉的鏡頭一律給固定音軌：有台詞放配音，沒台詞放靜音（否則角色會自己嘟囔）。"""
     picks = json.loads((OUT / "voice_picks.json").read_text(encoding="utf-8")) if LINES else {}
     only = os.environ.get("ONLY", "").split()
     for s in SHOTS:
@@ -256,6 +275,10 @@ def h3():
         with wave.open(str(od / "guide.wav"), "wb") as w:
             w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR); w.writeframes(bytes(buf))
         spec = h3_spec(s, secs, dlg); spec["audio"] = {"fixed": {"file": str(od / "guide.wav")}}
+        dm = {**{"steps": 8, "strength": 0.8}, **CFG["h3"].get("dmad", {})}   # 2026-10-23 實驗：4 步壓不住參考圖會換臉，8 步／0.8 等同 20 步、時間約一半 → 預設 8／0.8，film.json h3.dmad 可改回 4／1.0
+        if s.get("h3_lora") or dm != {"steps": 4, "strength": 1.0}:   # 動作 LoRA（例：Combat 0.6）或非預設 DMAD：draft 會蓋掉自訂 LoRA，所以關掉 draft、手動疊 DMAD
+            spec.update(draft=False, steps=dm["steps"], sampler="euler", shift={"video": 12, "audio": 2},
+                        lora=[{"name": "dmad_h3_4step_lora_critic_comfy.safetensors", "strength": dm["strength"]}] + s.get("h3_lora", []))
         (od / "spec.json").write_text(json.dumps(spec, ensure_ascii=False, indent=1), encoding="utf-8")
         run([PYH3, T / "h3_shot.py", od / "spec.json", "--out", od])
     sheet_clips()
@@ -349,7 +372,8 @@ def music():
     e = json.loads((OUT / "post" / "edl.json").read_text(encoding="utf-8")); secs = int(e["total"] + 4)
     m = CFG["music"]; md = OUT / "music"; md.mkdir(exist_ok=True)
     (md / "cap.txt").write_text(m["caption"], encoding="utf-8")
-    (md / "lyr.txt").write_text("[Intro]\n" + "[Instrumental]\n" * 14 + "[Outro]\n[Instrumental]\n", encoding="utf-8")   # 少於 14 個會太短；加 Verse 會冒人聲
+    n_ins = max(14, secs // 7)                       # 2026-10-23：段落數決定實際長度（seconds 只是上限）；14 段曾只生出 70 秒 → 依片長約每 7 秒一段
+    (md / "lyr.txt").write_text("[Intro]\n" + "[Instrumental]\n" * n_ins + "[Outro]\n[Instrumental]\n", encoding="utf-8")   # 少於 14 個會太短；加 Verse 會冒人聲
     for sd_ in m.get("seeds", [7, 23, 51]):
         sd = md / f"s{sd_}"; sd.mkdir(exist_ok=True)
         if not list(sd.glob("*.flac")):

@@ -300,7 +300,7 @@ def build_graph(spec, prompt, base, tag):
         "3": {"class_type": "VAELoader", "inputs": {"vae_name": spec.get("video_vae", MODELS["video_vae"])}},  # e.g. minimax_h3_video_vae_int8_convrot.safetensors
         "4": {"class_type": "VAELoader", "inputs": {"vae_name": MODELS["audio_vae"]}},
         "6": {"class_type": "MiniMaxH3ReferenceToVideo", "inputs": {"clip": ["2", 0], "vae": ["3", 0], "audio_vae": ["4", 0], "prompt": prompt,
-              "width": w, "height": h, "length": length, "ref_image_size": "match"}},
+              "width": w, "height": h, "length": length, "ref_image_size": spec.get("ref_image_size", "match")}},  # 2026-10-23：可 A/B "max"
         "7": {"class_type": "RandomNoise", "inputs": {"noise_seed": spec.get("seed", 42)}},
         "8": {"class_type": "KSamplerSelect", "inputs": {"sampler_name": "res_multistep"}},
         "9": {"class_type": "BasicScheduler", "inputs": {"model": ["1", 0], "scheduler": "simple", "steps": spec.get("steps", 14), "denoise": 1.0}},

@@ -63,6 +63,21 @@
 | `cut_out` | `"full"`＝用到鏡尾；不寫＝台詞結束＋`tail` 秒 |
 | `tail` | 台詞後留幾秒反應（喜劇停頓） |
 
+### 本 repo 增強的欄位（2026-10-19～23《團結》）
+
+| 欄位 | 說明 |
+|---|---|
+| `h3.dmad` | `{"steps": 8, "strength": 0.8}`（預設值）。寫 `{"steps": 4, "strength": 1.0}` 回到原版 |
+| `h3.setting_by_scene` | `{母版名稱: 場景描述}`，依每鏡 `scene[0]` 選；單鏡可寫 `setting` 覆蓋 |
+| `masters.<名稱>` | 也可以寫 `{"photo": "input_scene/xxx.jpg"}`：實景照置中裁成 1.75:1 當母版，不生 AI 場景 |
+| `snippets` | `{名稱: 文字}`，每鏡 `frame` 裡的 `{名稱}` 會被換掉 |
+| `chars.<代號>.look_full` | 含下半身的完整外觀（make_film 不讀，給 LoRA 訓練）；`look` 只寫到上衣 |
+| `shots[].constraints` | 整組**取代**全片 `h3.constraints`（`extra_constraints` 是追加） |
+| `shots[].h3_lora` | 疊動作 LoRA，例 `[{"name": "H3_Combat_V2.safetensors", "strength": 0.6}]` |
+| `shots[].alt`、`bg_mask`、`bg_scene` | 給 `tools/alt_frames.py`、`tools/bg_inpaint.py` 用，make_film 不讀 |
+
+範本與寫法說明：`templates/新片/`。
+
 ## 輸出（`out/`）
 
 `chars/` 定妝照、`masters/` 場景母版與每鏡裁切、`first/` 首幀與 `_sheet.jpg`、`voice/` 角色參考音、答案卷與 `bv/`（候選、`picks.json`、選中的台詞）、`h3/<鏡>/` 每鏡 spec、提示詞與 clip、`music/`、`ending/`、`post/`（`edl.json` 時間軸、放大片段、混音、字幕）、`cut/film_1080p.mp4` 成片＋手機版、`review/` 自審、`timing.json` 各階段時間。

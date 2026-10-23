@@ -2,6 +2,8 @@
 
 Copyright (c) 2026 山獅霸的多重宇宙 (mathruffian-dot)
 
+> **本 repo 是改作**：以 [mathruffian-dot/shanshiba-workflow-16gvram-32gram](https://github.com/mathruffian-dot/shanshiba-workflow-16gvram-32gram) 為底，由屏北高中（fuwen）於 2026-10 修改並新增 `AGENTS.md`、`README.md`、`docs/00`、`docs/08`～`docs/12`、`templates/新片/`、`tools/measure/README.md`，並在原版 `docs/02`、`docs/03`、`pipeline/template_local/README.md`、`README_三師爸原版.md` 加註。改作部分同樣以 CC BY-NC 4.0 授權，轉用時請同時標示原作者與改作者。
+
 本 repo 的**文件與素材**以 [創用 CC 姓名標示－非商業性 4.0 國際（CC BY-NC 4.0）](https://creativecommons.org/licenses/by-nc/4.0/deed.zh-hant) 授權，完整法律條文：<https://creativecommons.org/licenses/by-nc/4.0/legalcode.zh-hant>。
 
 ## 適用範圍

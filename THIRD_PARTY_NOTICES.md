@@ -1,5 +1,7 @@
 # THIRD_PARTY_NOTICES：第三方模型與工具授權
 
+> **本 repo 的出處**：改作自三師爸（山獅霸的多重宇宙，mathruffian-dot）的 [shanshiba-workflow-16gvram-32gram](https://github.com/mathruffian-dot/shanshiba-workflow-16gvram-32gram)（commit `1b2eecc`）。原作程式 MIT、文件 CC BY-NC 4.0，版權屬原作者；本 repo 的修改與新增部分沿用同樣授權（見 `LICENSE`、`LICENSE-docs.md`）。下方各模型授權為原作者 2026-10-07 查核的內容，本 repo 新增工具用到的模型列在最後一節。
+
 > 2026-10-07 依各官方頁面查核整理。**本 repo 不含任何模型權重**，只提供下載清單（`setup/downloads_*.json`）；下載與使用前請自行閱讀並同意各自的授權。
 > 這是授權條文整理，**不是法律意見**。頻道若要營利，請先就下方「⚠️」項目找律師確認，或寫信向權利方取得書面授權。
 
@@ -79,3 +81,21 @@
 | VoxCPM2＋自己訓練的台灣腔 LoRA | 本機 | Apache-2.0 | 視訓練資料 | 用自己有權利的台灣腔錄音 5–10 分鐘；**不能拿 Breeze 自架產出當訓練資料** |
 
 不能商用（權重非商用授權）：F5-TTS、MaskGCT、Llasa、Spark-TTS（權重 CC BY-NC-SA）、Fish-Speech／OpenAudio。
+
+## 本 repo 新增工具用到的模型與套件（2026-10-23 補）
+
+只用在**量測與首幀修圖**，不進成片；全部可在本機 CPU 執行（`tools/measure/`）或在現有 ComfyUI 上執行（`tools/bg_inpaint.py` 等）。
+
+| 項目 | 用在 | 授權 | 來源 |
+|---|---|---|---|
+| OpenCV（opencv-python < 5） | facecheck 讀影片、找臉、比對 | Apache-2.0 | https://github.com/opencv/opencv |
+| YuNet 人臉偵測（face_detection_yunet_2023mar） | facecheck | Apache-2.0（opencv_zoo） | https://github.com/opencv/opencv_zoo |
+| SFace 人臉特徵（face_recognition_sface_2021dec） | facecheck | Apache-2.0（opencv_zoo） | https://github.com/opencv/opencv_zoo |
+| DINOv2-base（facebook/dinov2-base） | bgcheck 場景特徵 | Apache-2.0 | https://huggingface.co/facebook/dinov2-base |
+| rembg | bgcheck、bg_inpaint 人物遮罩 | MIT | https://github.com/danielgatis/rembg |
+| BiRefNet（birefnet-portrait／birefnet-general） | 人物遮罩 | MIT | https://github.com/ZhengPeng7/BiRefNet |
+| U²-Net（u2net_human_seg） | 多人遮罩 | Apache-2.0 | https://github.com/xuebinqin/U-2-Net |
+
+- 若把 facecheck 的特徵換成 insightface（buffalo_l），其預訓練模型**限非商用**；可商用替代為 AuraFace（Apache-2.0）。
+- `tools/h3_ab.py` 內建的 `H3_Combat_V2`、`Motion_Repair_V2` 變體需另行下載（JOKER141，**未標示授權**，見上方「動作 LoRA」列）；只在本機使用、不轉散布。
+- 量測工具與修圖工具都**不得附上學生、本人照片或聲音**分享。
