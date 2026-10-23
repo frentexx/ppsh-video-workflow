@@ -1,0 +1,23 @@
+# 媒體與大檔
+*.mp4
+*.mov
+*.wav
+*.mp3
+!sfx/**/*.mp3
+*.flac
+*.safetensors
+*.gguf
+*.ckpt
+# 金鑰
+.env
+*.key
+*key*.txt
+# 快取
+__pycache__/
+*.pyc
+
+# 執行產物
+setup/smoke_out/
+pipeline/demo_local/out/
+pipeline/*/out/
+*.png.bak
